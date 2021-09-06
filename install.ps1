@@ -11,17 +11,17 @@ function cleanupAndExit($exitCode) {
     cd ..
     exit $exitCode
 }
-function installFromURL($name, $versionCMD, $URL, $installerName) {
+function installFromURL($name, $versionCMD, $URL) {
     $version = $null;
     try {
         $version = Invoke-Expression $versionCMD
     }
     catch {}
-
     if ($version) {
         echo "Found $name $version"
     }
     else {
+        $installerName = [System.IO.Path]::GetFileName($URL)
         $installerFilePath = "$installDir\$installerName"
         echo "$name not installed"
         if (-not (Test-Path -Path $installerFilePath -PathType Leaf)) {
@@ -64,17 +64,20 @@ function createProjectDirectory() {
     printLine
 }
 
+# Create project directory
 printLine
 printLine
 createProjectDirectory
 cd $projectName
+
 # Install dependencies
-installFromURL "node" "node -v" "https://nodejs.org/dist/v14.17.6/node-v14.17.6-x86.msi" "node_installer.msi"
-installFromURL "git" "git --version" "https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe" "git_installer.exe"
-installFromURL "mongoDB" "(& 'c:\program files\mongodb\server\4.4\bin\mongod.exe' --version)[0] "  "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-5.0.2-signed.msi" "mongodb_installer.msi"
+installFromURL "node" "node -v" "https://nodejs.org/dist/v14.17.6/node-v14.17.6-x86.msi"
+installFromURL "git" "git --version" "https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-64-bit.exe"
+installFromURL "mongoDB" "(& 'c:\program files\mongodb\server\4.4\bin\mongod.exe' --version)[0] "  "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-5.0.2-signed.msi"
 
 # Clone projects from git
 $gitRepoURLS =
+"https://github.com/vtt-app/vtt_installer.git",
 "https://github.com/vtt-app/vtt_server.git",
 "https://github.com/vtt-app/vtt_dev_client.git",
 "https://github.com/vtt-app/vtt_client.git",
@@ -90,7 +93,7 @@ function cloneGitRepo($URL) {
 
 function installNodePackages($name) {
     cd $name
-    echo "installing $name node packages"
+    echo "Installing $name node packages"
     npm i
     cd ..
     printLine
@@ -101,14 +104,8 @@ $projNames = $gitRepoURLS | % {[System.IO.Path]::GetFileNameWithoutExtension($_)
 
 $gitRepoURLS | % { cloneGitRepo($_) }
 $projNames | % { installNodePackages($_) }
-# echo $projNames
-# $outputFile = Split-Path $outputPath -leaf
 
-# git clone "https://github.com/vtt-app/vtt_server.git"
-# git clone "https://github.com/vtt-app/vtt_dev_client.git"
-# git clone "https://github.com/vtt-app/vtt_client.git"
-# git clone "https://github.com/vtt-app/vtt_shared.git"
-# git clone "https://github.com/Arik13/node_utility.git"
-# git clone "https://github.com/Arik13/ts_utility.git"
+Set-Service -Name MongoDB -StartupType Automatic
+Start-Service MongoDB
 
 cleanupAndExit 0
