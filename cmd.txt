@@ -1,0 +1,1 @@
+. { iwr -useb https://raw.githubusercontent.com/vtt-app/vtt_installer/master/install.ps1 https://omnitruck.chef.io/install.ps1 } | iex; install
